@@ -1,0 +1,38 @@
+# Normalise line endings so the repository is identical on every platform.
+#
+# WHY THIS MATTERS HERE SPECIFICALLY
+#   This project was authored on Windows. Without this file, git would rewrite
+#   every LF to CRLF in the working copy and commit those CRLFs back, so:
+#     - `node tools/bake-i18n.mjs --check` compares index.html byte-for-byte
+#       against the locale files and can report false staleness after a checkout
+#       on a different platform.
+#     - Binary assets (PNG/MP3) would be at risk if they were ever treated as
+#       text.
+#   `text=auto` lets git detect text vs binary itself and store LF in the repo.
+* text=auto eol=lf
+
+# Explicitly binary: never diff, never touch line endings.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.mp3 binary
+*.woff binary
+*.woff2 binary
+
+# Shell scripts must keep LF or they will not run on Linux/macOS.
+*.sh text eol=lf
+
+# Windows-only scripts keep CRLF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# GitHub Actions workflow files are executed on Linux; CRLF is tolerated but LF
+# keeps diffs clean.
+.github/workflows/*.yml text eol=lf
+
+# The generated PNG/JSON payload comparisons rely on exact bytes.
+static/image/* binary
+static/music/* binary

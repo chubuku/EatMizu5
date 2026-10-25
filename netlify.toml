@@ -1,0 +1,46 @@
+# Netlify configuration.
+#
+# Publish dist/ only. The repository root also holds tests/ and node_modules/,
+# which must never be served.
+#
+# Usage: drag the dist/ folder onto Netlify Drop, or connect the repo and
+# Netlify will run the build command below.
+
+[build]
+  command = "node tools/build-dist.mjs --verify"
+  publish = "dist"
+
+# The game has no backend, no redirects and no rewrites. A single-page app
+# fallback would be wrong here: index.html is the only page, and a catch-all
+# redirect would turn a genuine 404 into a confusing 200.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+
+# Immutable art and audio: safe to cache hard, since a change means a new file.
+[[headers]]
+  for = "/static/image/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/static/music/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Code and locales: cache briefly so a redeploy is picked up promptly.
+[[headers]]
+  for = "/static/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+
+[[headers]]
+  for = "/static/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=300"
+
+[[headers]]
+  for = "/static/i18n/*"
+  [headers.values]
+    Cache-Control = "public, max-age=300"

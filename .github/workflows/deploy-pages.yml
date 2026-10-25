@@ -1,0 +1,69 @@
+# Publishes the game to GitHub Pages.
+#
+# The repository root is both the game AND the dev tooling, so we do not serve
+# the repo root. `tools/build-dist.mjs` copies exactly the 13 files a browser
+# needs into dist/, and asserts the payload is self-contained (no external URLs,
+# no module scripts, every asset reference resolves). Pages then serves dist/.
+#
+# One-time setup: repo Settings -> Pages -> Source = "GitHub Actions".
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a running deploy finish rather than cancelling it mid-publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # No `npm install` on purpose: the game itself has zero runtime
+      # dependencies, and the build script uses only node: builtins.
+      - name: Build dist/
+        run: node tools/build-dist.mjs --verify
+
+      # Fails the deploy (instead of quietly shipping a broken site) if the
+      # published copy is missing an asset or pulls something off-origin.
+      - name: Assert the payload is self-contained
+        run: |
+          test -f dist/index.html
+          test -f dist/static/game.js
+          test -f dist/static/image/ClickBefore.png
+          test -f dist/static/image/ClickAfter.png
+          test -f dist/static/music/tap.mp3
+          test -f dist/static/music/end.mp3
+          test -f dist/static/music/err.mp3
+          ! grep -rIl 'https\?://' dist/ --include='*.html' --include='*.css' --include='*.js'
+          echo "payload OK: $(find dist -type f | wc -l) files"
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

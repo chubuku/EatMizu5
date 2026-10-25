@@ -1,0 +1,907 @@
+/* ==========================================================================
+   Kano Beat — static/index.css
+   Theme: warm crimson / salmon, matching static/image/ClickBefore.png
+   (a red-lit anime illustration) rather than the original's pale blue.
+
+   No @import, no remote url(), no external fonts. Everything below resolves
+   inside ./static/, so the game works identically from file:// and from a
+   local http server with no network.
+   ========================================================================== */
+
+:root {
+    /* --- Palette (CONTRACT.md section 4) ------------------------------- */
+    --kb-bg: #1a0d10;          /* page backdrop, dark */
+    --kb-board: #2a1116;       /* game area fill */
+    --kb-grid: #58202b;        /* grid line colour */
+    --kb-accent: #e2565a;      /* HUD + primary buttons, warm coral/crimson */
+    --kb-accent-2: #f4a08c;    /* secondary accent */
+    --kb-text: #fdeee9;        /* body text */
+    --kb-tile: #ff7a6b;        /* tile art background-size basis */
+
+    /* --- Derived tokens (convenience only; palette above is the contract) */
+    --kb-panel: rgba(42, 17, 22, .88);
+    --kb-panel-solid: #341419;
+    --kb-shadow: rgba(0, 0, 0, .5);
+    --kb-glow: rgba(226, 86, 90, .45);
+    --kb-btn-bg: rgba(88, 32, 43, .92);
+    --kb-btn-bg-hi: rgba(120, 44, 56, .96);
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+html,
+body {
+    /* System font stack only. clamp() replaces the original's document.write
+       font-size injection, so no script is needed to size the UI. */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Helvetica, Arial, "Noto Sans", "Noto Sans CJK SC",
+        STHeiTi, sans-serif;
+    font-size: clamp(14px, 3.4vw, 20px);
+    margin: 0;
+    padding: 0;
+    background: var(--kb-bg);
+    color: var(--kb-text);
+    overflow: hidden;
+    /* dvh where supported, vh as the fallback for older engines. */
+    height: 100vh;
+    height: 100dvh;
+}
+
+* {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    -ms-tap-highlight-color: rgba(0, 0, 0, 0);
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    box-sizing: border-box;
+}
+
+a,
+button {
+    font-family: inherit;
+}
+
+a {
+    cursor: pointer;
+}
+
+/* Standard visually-hidden pattern: removed from view, still read by AT. */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+.loading {
+    background-image: url("data:image/gif;base64,R0lGODlhJQAlAJECAL3L2AYrTv///wAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQFCgACACwAAAAAJQAlAAACi5SPqcvtDyGYIFpF690i8xUw3qJBwUlSadmcLqYmGQu6KDIeM13beGzYWWy3DlB4IYaMk+Dso2RWkFCfLPcRvFbZxFLUDTt21BW56TyjRep1e20+i+eYMR145W2eefj+6VFmgTQi+ECVY8iGxcg35phGo/iDFwlTyXWphwlm1imGRdcnuqhHeop6UAAAIfkEBQoAAgAsEAACAAQACwAAAgWMj6nLXAAh+QQFCgACACwVAAUACgALAAACFZQvgRi92dyJcVJlLobUdi8x4bIhBQAh+QQFCgACACwXABEADAADAAACBYyPqcsFACH5BAUKAAIALBUAFQAKAAsAAAITlGKZwWoMHYxqtmplxlNT7ixGAQAh+QQFCgACACwQABgABAALAAACBYyPqctcACH5BAUKAAIALAUAFQAKAAsAAAIVlC+BGL3Z3IlxUmUuhtR2LzHhsiEFACH5BAUKAAIALAEAEQAMAAMAAAIFjI+pywUAIfkEBQoAAgAsBQAFAAoACwAAAhOUYJnAagwdjGq2amXGU1PuLEYBACH5BAUKAAIALBAAAgAEAAsAAAIFhI+py1wAIfkEBQoAAgAsFQAFAAoACwAAAhWUL4AIvdnciXFSZS6G1HYvMeGyIQUAIfkEBQoAAgAsFwARAAwAAwAAAgWEj6nLBQAh+QQFCgACACwVABUACgALAAACE5RgmcBqDB2MarZqZcZTU+4sRgEAIfkEBQoAAgAsEAAYAAQACwAAAgWEj6nLXAAh+QQFCgACACwFABUACgALAAACFZQvgAi92dyJcVJlLobUdi8x4bIhBQAh+QQFCgACACwBABEADAADAAACBYSPqcsFADs=");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: auto 60%;
+}
+
+/* --------------------------------------------------------------------------
+   Layout primitives preserved from the original (behaviour + reskin rely
+   on these class names existing).
+   -------------------------------------------------------------------------- */
+
+.SHADE {
+    top: 0;
+    left: 0;
+    width: 100%;
+    bottom: 0;
+    z-index: 11;
+}
+
+.BOX-V {
+    box-orient: vertical;
+    -webkit-box-orient: vertical;
+    -moz-box-orient: vertical;
+    -ms-flex-direction: column;
+}
+
+.BOX-D {
+    box-align: end;
+    box-pack: center;
+    -webkit-box-align: end;
+    -webkit-box-pack: center;
+    -ms-flex-align: end;
+    -ms-flex-pack: center;
+}
+
+.BOX-M {
+    box-align: center;
+    box-pack: center;
+    -webkit-box-align: center;
+    -webkit-box-pack: center;
+    -ms-flex-align: center;
+    -ms-flex-pack: center;
+}
+
+.BOX-S {
+    display: block;
+    box-flex: 1;
+    -webkit-box-flex: 1;
+    -moz-box-flex: 1;
+    -ms-flex: 1;
+}
+
+.BOX,
+.BOX-V,
+.BOX-D,
+.BOX-M,
+.FOOTER {
+    display: box;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    /* Modern fallback: the legacy box model above is ignored where unsupported. */
+    display: flex;
+}
+
+/* Modern, reliable centring for the box-model containers on top of the
+   legacy properties above. */
+.BOX-M {
+    align-items: center;
+    justify-content: center;
+}
+
+.BOX-V {
+    flex-direction: column;
+}
+
+.BOX-D {
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.BBOX,
+.BOX,
+.APP-STAGE,
+.INSET-STAGE,
+.STAGE,
+.PAGE-STAGE,
+.PAGE,
+.PAGE-BOX,
+.INSET-PAGE,
+.FOOTER {
+    box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+}
+
+.FILL {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Playfield
+   -------------------------------------------------------------------------- */
+
+/* #gameBody is the centred play column. The reference injected it with
+   document.write and sized fonts from JS; here it is plain CSS, so the game
+   works the same from file:// and over http with no script involvement.
+   game.js does `getElementById('gameBody') || document.body`, so this element
+   must exist and must be the element whose offsetWidth / 4 is one tile. */
+#gameBody {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    /* No horizontal padding or border: blockSize = offsetWidth / 4 must match
+       the tiles' own coordinate space exactly. */
+    height: 100vh;
+    height: 100dvh;
+}
+
+#GameLayerBG {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    background: var(--kb-board);
+    /* Absolutely positioned inside the fixed-size #gameBody column, so the
+       board always matches the tap-target geometry game.js measures. */
+    position: absolute;
+    width: 100%;
+    /* Warm vignette so the tiles read against the dark board. */
+    background-image: radial-gradient(circle at 50% 38%,
+        rgba(255, 122, 107, .16) 0%,
+        rgba(88, 32, 43, .30) 55%,
+        rgba(26, 13, 16, .72) 100%);
+    touch-action: manipulation;
+}
+
+#GameLayerBG.flash {
+    /* Applied to the board itself when the timer runs out. */
+    background-color: var(--kb-accent);
+}
+
+.GameLayer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+}
+
+.block {
+    position: absolute;
+    border-top: 1px solid var(--kb-grid);
+    background-repeat: no-repeat;
+    background-position: center;
+    /* Tile art is drawn by the .t1..t5 / .tt1..tt5 classes below. */
+    background-size: var(--kb-tile) auto;
+}
+
+.bl {
+    border-left: 1px solid var(--kb-grid);
+}
+
+/* CONTRACT.md section 4: T4 relies on the class name alone carrying the
+   visual, exactly like the original. Relative ./image/ paths only. */
+.t1,
+.t2,
+.t3,
+.t4,
+.t5 {
+    background-size: auto 100%;
+    background-image: url(./image/ClickBefore.png);
+}
+
+.tt1,
+.tt2,
+.tt3,
+.tt4,
+.tt5 {
+    background-size: auto 86%;
+    background-image: url(./image/ClickAfter.png);
+}
+
+#GameTimeLayer {
+    top: 1em;
+    /* Centred over the play column so the HUD lines up with the board on
+       wide screens; full-bleed on narrow ones. */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 640px;
+    text-align: center;
+    color: var(--kb-accent);
+    font-size: clamp(2.2rem, 9vw, 4rem);
+    font-weight: 700;
+    letter-spacing: .04em;
+    /* The welcome overlay sits above the HUD while the title screen is up.
+       A dark halo keeps "TIME:20" reading as a deliberate HUD element there
+       (a white halo made it wash out into a muddy ghost against the dark
+       backdrop), and it stays legible over the bright tile art in play. */
+    text-shadow: 0 0 4px rgba(20, 8, 11, .95), 0 0 10px rgba(20, 8, 11, .85),
+        0 2px 8px rgba(0, 0, 0, .7);
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* The HUD is only meaningful once a round is running, so it is removed from
+   the render tree while the title screen is up. Purely CSS: game.js already
+   sets #welcome's inline `display` to `block` on the title screen and `none`
+   once readyBtn() closes it (closeWelcomeLayer/showWelcomeLayer, via
+   setDisplay). No game.js hook or class was needed, so nothing in logic-dev's
+   file is touched.
+   `display: none` is used rather than `visibility: hidden` so the element is
+   genuinely not displayed (and so cheap display-state probes agree).
+   :has() is supported in the Chrome/Edge this project targets and in current
+   Safari/Firefox; where it is unsupported the rule is simply ignored and the
+   HUD stays visible as before, so it degrades safely rather than breaking. */
+body:has(#welcome[style*="block"]) #GameTimeLayer {
+    display: none;
+}
+
+#landscape {
+    display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Full-viewport overlays
+   -------------------------------------------------------------------------- */
+
+/* Overlays cover the viewport in both layouts (`fixed`), replacing the
+   original's document.write position switch. #GameLayerBG is deliberately NOT
+   in this group: it is absolute inside the centred #gameBody column so that
+   its geometry matches the tap-target maths in game.js. */
+#welcome,
+#GameTimeLayer,
+#GameScoreLayer.SHADE,
+#RecordsLayer {
+    position: fixed;
+}
+
+#welcome {
+    /* FULLY OPAQUE. This used to carry .86 alpha, and the remaining 14% let the
+       board's bright tile art bleed through as four vertical bands plus a dim
+       "TIME:20" ghost behind the title. Measured defect, not a style choice:
+       the composited board region had a luminance spread of 28.2 (1280x800)
+       and 15.2 (480x800) where an opaque overlay must render flat. Decorative
+       art belongs on .welcome-bg below, under explicit control, rather than as
+       accidental see-through.
+       The alpha is written longhand (not as a hex literal) so the
+       value being fixed stays explicit and unambiguous to read and to parse. */
+    background-color: rgba(20, 8, 11, 1);
+    text-align: center;
+    font-weight: bold;
+    overflow: hidden;
+}
+
+/* Decorative layer: the user's own illustration, deliberately re-introduced on
+   top of the now-opaque #welcome instead of bleeding through it. Previously
+   this rule declared background-size with NO background-image, so it did
+   nothing at all (inert). It now has a real image, is non-interactive, and sits
+   BELOW the content column (.welcome-inner, z-index 5) so it can never compete
+   with the title or the buttons for contrast. */
+.welcome-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url(./image/ClickBefore.png);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    opacity: .28;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.welcome-inner {
+    z-index: 5;
+    overflow-y: auto;
+    padding: 1em;
+}
+
+.welcome-col {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.welcome-head {
+    margin-bottom: 1.6em;
+}
+
+.game-title {
+    font-size: clamp(1.6rem, 7vw, 2.6rem);
+    line-height: 1.25;
+    color: var(--kb-accent-2);
+    text-shadow: 0 2px 10px var(--kb-shadow), 0 0 18px var(--kb-glow);
+}
+
+#desc {
+    display: block;
+    margin-top: .5em;
+    font-size: clamp(.95rem, 3.6vw, 1.35rem);
+    line-height: 1.5em;
+    color: var(--kb-text);
+    opacity: .92;
+}
+
+#btn_group {
+    width: 62%;
+    max-width: 260px;
+    margin: 0 auto;
+}
+
+.btn-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+/* --------------------------------------------------------------------------
+   Buttons
+   -------------------------------------------------------------------------- */
+
+.kb-btn {
+    display: block;
+    width: 100%;
+    margin: 0 0 .55em 0;
+    padding: .42em .8em;
+    font-size: 1.12em;
+    font-weight: 700;
+    line-height: 1.5em;
+    text-align: center;
+    text-decoration: none;
+    color: var(--kb-text);
+    background: var(--kb-btn-bg);
+    border: 1px solid var(--kb-grid);
+    border-radius: .5em;
+    box-shadow: 0 .18em 0 var(--kb-shadow), inset 0 1px 0 rgba(255, 255, 255, .07);
+    transition: background-color .12s ease, transform .06s ease;
+}
+
+.kb-btn:hover {
+    background: var(--kb-btn-bg-hi);
+}
+
+.kb-btn:active {
+    opacity: .82;
+    transform: translateY(1px);
+}
+
+.kb-btn:focus-visible {
+    outline: 2px solid var(--kb-accent-2);
+    outline-offset: 2px;
+}
+
+.kb-btn-primary {
+    color: #fff;
+    background: linear-gradient(180deg, var(--kb-accent) 0%, #b8343c 100%);
+    border-color: #ff8a80;
+    box-shadow: 0 .2em 0 rgba(0, 0, 0, .45), 0 0 16px var(--kb-glow);
+}
+
+.kb-btn-primary:hover {
+    background: linear-gradient(180deg, #f06a6a 0%, #c93b44 100%);
+}
+
+.kb-btn-lg {
+    font-size: 1.12em;
+    padding: .48em .8em;
+}
+
+.kb-btn-sm {
+    font-size: .78em;
+    padding: .35em .5em;
+    margin-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Mode picker — plain custom dropdown (no Bootstrap)
+   -------------------------------------------------------------------------- */
+
+.mode-picker {
+    position: relative;
+    width: 100%;
+    /* Tight under the mode button: the caption below belongs to this control,
+       not to the Records button that follows it. */
+    margin-bottom: .1em;
+}
+
+.mode-toggle {
+    margin-bottom: 0;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    margin: .25em 0 0 0;
+    padding: 0;
+    list-style: none;
+    background: var(--kb-panel-solid);
+    border: 1px solid var(--kb-grid);
+    border-radius: .5em;
+    box-shadow: 0 .6em 1.4em var(--kb-shadow);
+    overflow: hidden;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-item {
+    display: block;
+    padding: .5em .7em;
+    font-size: .95em;
+    font-weight: 700;
+    color: var(--kb-text);
+    text-decoration: none;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+
+.dropdown-item:last-child {
+    border-bottom: 0;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background: var(--kb-accent);
+    color: #fff;
+}
+
+.mode-desc {
+    /* Pulled up close to the mode button and pushed well clear of the next
+       button, so the caption visually groups with the mode picker it
+       describes rather than reading as a label for Records. */
+    margin: -.05em 0 .85em 0;
+    padding: 0 .4em;
+    font-size: .66em;
+    font-weight: 400;
+    line-height: 1.35em;
+    color: var(--kb-accent-2);
+    opacity: .9;
+    min-height: 1.2em;
+    text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   Settings
+   -------------------------------------------------------------------------- */
+
+#setting {
+    width: 92%;
+    max-width: 420px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.setting-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3em;
+    justify-content: center;
+    margin-bottom: .8em;
+}
+
+.setting-btns .kb-btn {
+    width: auto;
+    flex: 1 1 auto;
+}
+
+.setting-row {
+    display: flex;
+    align-items: stretch;
+    margin-bottom: .55em;
+    text-align: left;
+}
+
+.setting-label {
+    flex: 0 0 30%;
+    display: flex;
+    align-items: center;
+    padding: .35em .5em;
+    font-size: .85em;
+    font-weight: 700;
+    color: var(--kb-text);
+    background: rgba(88, 32, 43, .85);
+    border: 1px solid var(--kb-grid);
+    border-right: 0;
+    border-radius: .45em 0 0 .45em;
+}
+
+.kb-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: .35em .5em;
+    font-family: inherit;
+    font-size: .85em;
+    color: var(--kb-text);
+    background: rgba(20, 8, 11, .85);
+    border: 1px solid var(--kb-grid);
+    border-radius: 0 .45em .45em 0;
+}
+
+.kb-input::placeholder {
+    color: rgba(253, 238, 233, .42);
+}
+
+.kb-input:focus {
+    outline: 2px solid var(--kb-accent);
+    outline-offset: -1px;
+}
+
+/* --------------------------------------------------------------------------
+   Results panel
+   -------------------------------------------------------------------------- */
+
+#GameScoreLayer {
+    padding-top: 2em;
+    font-size: clamp(1rem, 4vw, 1.5rem);
+    font-weight: bold;
+    color: var(--kb-text);
+    text-align: center;
+    overflow-y: auto;
+    background-color: rgba(20, 8, 11, .88);
+}
+
+.score-panel {
+    width: 92%;
+    max-width: 460px;
+    margin: 0 auto 2em auto;
+    padding: 5% 6%;
+    background: var(--kb-panel);
+    border: 1px solid var(--kb-grid);
+    border-radius: .8em;
+    box-shadow: 0 .8em 2em var(--kb-shadow);
+}
+
+.score-heading {
+    margin-bottom: .7em;
+    font-size: 1.35em;
+    line-height: 1.3em;
+    color: var(--kb-accent-2);
+}
+
+.score-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: baseline;
+    gap: .4em;
+    margin-bottom: .3em;
+    text-align: left;
+}
+
+.score-row .label {
+    flex: 0 0 auto;
+    min-width: 6.5em;
+    font-size: .82em;
+    letter-spacing: .03em;
+    color: var(--kb-accent-2);
+    text-align: right;
+}
+
+.score-row .value {
+    flex: 0 0 auto;
+    min-width: 4em;
+    font-size: 1em;
+    color: var(--kb-text);
+    text-align: left;
+}
+
+#GameScoreLayer .btn-row {
+    margin-top: 1.1em;
+}
+
+.btn-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .25em;
+}
+
+.btn-row .kb-btn {
+    max-width: 16em;
+}
+
+/* --------------------------------------------------------------------------
+   Records overlay
+   -------------------------------------------------------------------------- */
+
+#RecordsLayer {
+    background-color: rgba(20, 8, 11, .9);
+    text-align: center;
+    overflow-y: auto;
+    padding: 1em;
+}
+
+.panel {
+    width: 92%;
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 5% 6%;
+    color: var(--kb-text);
+    background: var(--kb-panel);
+    border: 1px solid var(--kb-grid);
+    border-radius: .8em;
+    box-shadow: 0 .8em 2em var(--kb-shadow);
+}
+
+.panel-heading {
+    margin-bottom: .6em;
+    font-size: 1.5em;
+    font-weight: 700;
+    color: var(--kb-accent-2);
+}
+
+.records-list {
+    max-height: 55vh;
+    max-height: 55dvh;
+    margin-bottom: .9em;
+    overflow-y: auto;
+    text-align: left;
+}
+
+.record-row {
+    display: grid;
+    grid-template-columns: 2.4em 1fr auto;
+    grid-template-areas: "rank score score" "rank meta meta";
+    align-items: center;
+    gap: .1em .55em;
+    padding: .45em .6em;
+    margin-bottom: .35em;
+    font-size: .8em;
+    background: rgba(20, 8, 11, .55);
+    border: 1px solid rgba(88, 32, 43, .8);
+    border-radius: .5em;
+}
+
+.record-row.top {
+    border-color: var(--kb-accent);
+    background: linear-gradient(90deg, rgba(226, 86, 90, .28) 0%, rgba(20, 8, 11, .55) 70%);
+    box-shadow: 0 0 12px var(--kb-glow);
+}
+
+.record-rank {
+    grid-area: rank;
+    font-size: 1.25em;
+    font-weight: 700;
+    color: var(--kb-accent-2);
+    text-align: center;
+}
+
+.record-row.top .record-rank {
+    color: #ffd9a0;
+}
+
+.record-score {
+    grid-area: score;
+    font-size: 1.05em;
+    font-weight: 700;
+    color: var(--kb-text);
+}
+
+.record-meta {
+    grid-area: meta;
+    font-size: .72em;
+    line-height: 1.35em;
+    color: rgba(253, 238, 233, .68);
+}
+
+/* --------------------------------------------------------------------------
+   Animation
+   -------------------------------------------------------------------------- */
+
+@keyframes flash {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@-ms-keyframes flash {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@-webkit-keyframes flash {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+.flash {
+    -webkit-animation: flash .2s 3;
+    animation: flash .2s 3;
+}
+
+.bad {
+    background-color: rgb(211, 91, 91);
+    -webkit-animation: flash .2s 3;
+    animation: flash .2s 3;
+}
+
+/* Paused state — toggled by game.js while the Records overlay is open. */
+.paused {
+    filter: grayscale(.75) brightness(.6);
+    -webkit-animation-play-state: paused;
+    animation-play-state: paused;
+}
+
+.noscript-warn {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100000;
+    padding: .8em;
+    font-weight: 700;
+    text-align: center;
+    color: #fff;
+    background: #b8343c;
+}
+
+/* --------------------------------------------------------------------------
+   Responsive + accessibility
+   -------------------------------------------------------------------------- */
+
+@media (min-width: 641px) {
+    /* Wide screens: the board and overlays become a centred 640px column, so
+       which region is the play area is unambiguous. The overlays stay fixed
+       and cover the viewport, matching the original's desktop behaviour.
+       NOTE: #welcome stays fully opaque here too. This rule previously set
+       alpha .92, which re-introduced the bleed-through on desktop only, in the
+       very viewport where the measured luminance spread was worst (28.2). */
+    #welcome {
+        background-color: rgba(20, 8, 11, 1);
+    }
+}
+
+@media (max-width: 640px) {
+    /* Narrow screens: full-bleed. */
+    #GameLayerBG {
+        max-width: none;
+    }
+
+    #btn_group {
+        width: 78%;
+        max-width: 240px;
+    }
+
+    .score-row .label {
+        min-width: 5.5em;
+    }
+}
+
+@media (max-width: 360px) {
+    #btn_group {
+        width: 88%;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 450px) {
+    #landscape {
+        display: block;
+        position: fixed;
+        top: 30%;
+        left: 0;
+        right: 0;
+        z-index: 12;
+        padding: .6em;
+        font-weight: 700;
+        text-align: center;
+        color: var(--kb-text);
+        background: rgba(20, 8, 11, .92);
+    }
+}
+
+/* Respect the user's motion preference: no flashing. */
+@media (prefers-reduced-motion: reduce) {
+    .flash,
+    .bad {
+        -webkit-animation: none;
+        animation: none;
+    }
+
+    .kb-btn {
+        transition: none;
+    }
+}

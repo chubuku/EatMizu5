@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title data-i18n="eat-kano">Kano Beat</title>
+    <meta name="description" content="Kano Beat - a four-lane rhythm tap game. Local bests and records, no network required." />
+    <meta name="theme-color" content="#1a0d10" />
+    <meta name="viewport" content="initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, width=device-width, target-densitydpi=device-dpi" />
+    <link rel="icon" href="data:," />
+    <link href="./static/index.css" rel="stylesheet" type="text/css">
+</head>
+
+<body onLoad="init()" oncontextmenu="self.event.returnValue=false">
+
+<noscript>
+    <div class="noscript-warn">Kano Beat needs JavaScript enabled to run.</div>
+</noscript>
+
+<!-- ============================= Board ============================= -->
+<!-- #gameBody is the centred play column: the reference created it with
+     document.write and did `getElementById('gameBody') || document.body`.
+     It is a real static element here; width comes from CSS, not from JS. -->
+<div id="gameBody">
+<!-- #GameLayerBG is the tap target; click/keyboard events are routed here by game.js. -->
+<div id="GameLayerBG" role="application" aria-label="">
+    <div id="GameLayer1" class="GameLayer">
+        <div id="GameLayer1-0" num="0" class="block"></div>
+        <div id="GameLayer1-1" num="1" class="block bl"></div>
+        <div id="GameLayer1-2" num="2" class="block bl"></div>
+        <div id="GameLayer1-3" num="3" class="block bl"></div>
+        <div id="GameLayer1-4" num="4" class="block"></div>
+        <div id="GameLayer1-5" num="5" class="block bl"></div>
+        <div id="GameLayer1-6" num="6" class="block bl"></div>
+        <div id="GameLayer1-7" num="7" class="block bl"></div>
+        <div id="GameLayer1-8" num="8" class="block"></div>
+        <div id="GameLayer1-9" num="9" class="block bl"></div>
+        <div id="GameLayer1-10" num="10" class="block bl"></div>
+        <div id="GameLayer1-11" num="11" class="block bl"></div>
+        <div id="GameLayer1-12" num="12" class="block"></div>
+        <div id="GameLayer1-13" num="13" class="block bl"></div>
+        <div id="GameLayer1-14" num="14" class="block bl"></div>
+        <div id="GameLayer1-15" num="15" class="block bl"></div>
+        <div id="GameLayer1-16" num="16" class="block"></div>
+        <div id="GameLayer1-17" num="17" class="block bl"></div>
+        <div id="GameLayer1-18" num="18" class="block bl"></div>
+        <div id="GameLayer1-19" num="19" class="block bl"></div>
+        <div id="GameLayer1-20" num="20" class="block"></div>
+        <div id="GameLayer1-21" num="21" class="block bl"></div>
+        <div id="GameLayer1-22" num="22" class="block bl"></div>
+        <div id="GameLayer1-23" num="23" class="block bl"></div>
+        <div id="GameLayer1-24" num="24" class="block"></div>
+        <div id="GameLayer1-25" num="25" class="block bl"></div>
+        <div id="GameLayer1-26" num="26" class="block bl"></div>
+        <div id="GameLayer1-27" num="27" class="block bl"></div>
+        <div id="GameLayer1-28" num="28" class="block"></div>
+        <div id="GameLayer1-29" num="29" class="block bl"></div>
+        <div id="GameLayer1-30" num="30" class="block bl"></div>
+        <div id="GameLayer1-31" num="31" class="block bl"></div>
+        <div id="GameLayer1-32" num="32" class="block"></div>
+        <div id="GameLayer1-33" num="33" class="block bl"></div>
+        <div id="GameLayer1-34" num="34" class="block bl"></div>
+        <div id="GameLayer1-35" num="35" class="block bl"></div>
+        <div id="GameLayer1-36" num="36" class="block"></div>
+        <div id="GameLayer1-37" num="37" class="block bl"></div>
+        <div id="GameLayer1-38" num="38" class="block bl"></div>
+        <div id="GameLayer1-39" num="39" class="block bl"></div>
+    </div>
+    <div id="GameLayer2" class="GameLayer">
+        <div id="GameLayer2-0" num="0" class="block"></div>
+        <div id="GameLayer2-1" num="1" class="block bl"></div>
+        <div id="GameLayer2-2" num="2" class="block bl"></div>
+        <div id="GameLayer2-3" num="3" class="block bl"></div>
+        <div id="GameLayer2-4" num="4" class="block"></div>
+        <div id="GameLayer2-5" num="5" class="block bl"></div>
+        <div id="GameLayer2-6" num="6" class="block bl"></div>
+        <div id="GameLayer2-7" num="7" class="block bl"></div>
+        <div id="GameLayer2-8" num="8" class="block"></div>
+        <div id="GameLayer2-9" num="9" class="block bl"></div>
+        <div id="GameLayer2-10" num="10" class="block bl"></div>
+        <div id="GameLayer2-11" num="11" class="block bl"></div>
+        <div id="GameLayer2-12" num="12" class="block"></div>
+        <div id="GameLayer2-13" num="13" class="block bl"></div>
+        <div id="GameLayer2-14" num="14" class="block bl"></div>
+        <div id="GameLayer2-15" num="15" class="block bl"></div>
+        <div id="GameLayer2-16" num="16" class="block"></div>
+        <div id="GameLayer2-17" num="17" class="block bl"></div>
+        <div id="GameLayer2-18" num="18" class="block bl"></div>
+        <div id="GameLayer2-19" num="19" class="block bl"></div>
+        <div id="GameLayer2-20" num="20" class="block"></div>
+        <div id="GameLayer2-21" num="21" class="block bl"></div>
+        <div id="GameLayer2-22" num="22" class="block bl"></div>
+        <div id="GameLayer2-23" num="23" class="block bl"></div>
+        <div id="GameLayer2-24" num="24" class="block"></div>
+        <div id="GameLayer2-25" num="25" class="block bl"></div>
+        <div id="GameLayer2-26" num="26" class="block bl"></div>
+        <div id="GameLayer2-27" num="27" class="block bl"></div>
+        <div id="GameLayer2-28" num="28" class="block"></div>
+        <div id="GameLayer2-29" num="29" class="block bl"></div>
+        <div id="GameLayer2-30" num="30" class="block bl"></div>
+        <div id="GameLayer2-31" num="31" class="block bl"></div>
+        <div id="GameLayer2-32" num="32" class="block"></div>
+        <div id="GameLayer2-33" num="33" class="block bl"></div>
+        <div id="GameLayer2-34" num="34" class="block bl"></div>
+        <div id="GameLayer2-35" num="35" class="block bl"></div>
+        <div id="GameLayer2-36" num="36" class="block"></div>
+        <div id="GameLayer2-37" num="37" class="block bl"></div>
+        <div id="GameLayer2-38" num="38" class="block bl"></div>
+        <div id="GameLayer2-39" num="39" class="block bl"></div>
+    </div>
+    <p id="a11y-hint" class="visually-hidden"></p>
+</div>
+<div id="GameTimeLayer" role="status" aria-live="polite"></div>
+</div><!-- /#gameBody -->
+
+<div id="landscape">Please rotate your device to portrait.</div>
+
+<!-- =========================== Results ============================ -->
+<div id="GameScoreLayer" class="SHADE" style="display:none;">
+    <div class="score-panel">
+        <div id="GameScoreLayer-text" class="score-heading"></div>
+        <div id="GameScoreLayer-CPS" class="score-row">
+            <div class="label">CPS</div>
+            <div class="value" id="cps"></div>
+        </div>
+        <div id="score-row-wrapper">
+            <div id="GameScoreLayer-score" class="score-row">
+                <div class="label" data-i18n="score">SCORE-I18N</div>
+                <div class="value" id="score"></div>
+            </div>
+        </div>
+        <div id="GameScoreLayer-bast" class="score-row">
+            <div class="label" data-i18n="best">BEST-I18N</div>
+            <div class="value" id="best"></div>
+        </div>
+        <div id="GameScoreLayer-maxCombo" class="score-row">
+            <div class="label" data-i18n="max-combo">MAX-COMBO-I18N</div>
+            <div class="value" id="maxCombo"></div>
+        </div>
+        <div id="GameScoreLayer-hits" class="score-row">
+            <div class="label" data-i18n="hits">HITS-I18N</div>
+            <div class="value" id="hits"></div>
+        </div>
+        <div id="GameScoreLayer-misses" class="score-row">
+            <div class="label" data-i18n="misses">MISSES-I18N</div>
+            <div class="value" id="misses"></div>
+        </div>
+        <div id="GameScoreLayer-accuracy" class="score-row">
+            <div class="label" data-i18n="accuracy">ACCURACY-I18N</div>
+            <div class="value" id="accuracy"></div>
+        </div>
+        <div class="btn-row">
+            <button type="button" class="kb-btn kb-btn-primary kb-btn-lg" id="replay" onclick="replayBtn()" data-i18n="again">AGAIN-I18N</button>
+            <button type="button" class="kb-btn kb-btn-lg" onclick="window.location.reload()" data-i18n="home">HOME-I18N</button>
+            <button type="button" class="kb-btn kb-btn-lg" onclick="show_records()" data-i18n="record">RECORDS-I18N</button>
+        </div>
+    </div>
+</div>
+
+<!-- =========================== Records ============================ -->
+<div id="RecordsLayer" class="SHADE BOX-M" style="display:none" role="dialog" aria-modal="true" aria-labelledby="RecordsLayer-text">
+    <div class="panel">
+        <div id="RecordsLayer-text" class="panel-heading"></div>
+        <div id="RecordsLayer-list" class="records-list"></div>
+        <div class="btn-row">
+            <button type="button" class="kb-btn kb-btn-lg" id="records-clear" onclick="clearRecords()"><span data-i18n="records-clear">RECORDS-CLEAR-I18N</span></button>
+            <button type="button" class="kb-btn kb-btn-primary kb-btn-lg" id="records-close" onclick="hide_records()"><span>OK</span></button>
+        </div>
+    </div>
+</div>
+
+<!-- =========================== Welcome ============================ -->
+<div id="welcome" class="SHADE BOX-M">
+    <div class="welcome-bg FILL"></div>
+    <div class="FILL BOX-M welcome-inner">
+        <div class="welcome-col">
+            <div class="welcome-head">
+                <div class="game-title" data-i18n="game-title">GAME-TITLE-I18N</div>
+                <div id="desc">
+                    <span data-i18n="game-intro1">GAME-INTRO1-I18N</span><br />
+                    <span data-i18n="game-intro2">GAME-INTRO2-I18N</span><br />
+                </div>
+            </div>
+            <div id="btn_group">
+                <div class="btn-stack">
+                    <a class="kb-btn kb-btn-primary kb-btn-lg" onclick="readyBtn()" data-i18n="start">START-I18N</a>
+                    <div class="mode-picker">
+                        <a class="kb-btn kb-btn-lg mode-toggle" href="javascript: void(0);" role="button" id="mode" aria-haspopup="true" aria-expanded="false" aria-controls="mode-menu" onclick="kbToggleModeMenu(event)" data-i18n="normal">NORMAL-I18N</a>
+                        <ul id="mode-menu" class="dropdown-menu" role="menu" aria-labelledby="mode">
+                            <li role="none"><a class="dropdown-item" role="menuitem" onclick="changeMode(MODE_NORMAL)" data-i18n="normal">NORMAL-I18N</a></li>
+                            <li role="none"><a class="dropdown-item" role="menuitem" onclick="changeMode(MODE_ENDLESS)" data-i18n="endless">ENDLESS-I18N</a></li>
+                            <li role="none"><a class="dropdown-item" role="menuitem" onclick="changeMode(MODE_PRACTICE)" data-i18n="practice">PRACTICE-I18N</a></li>
+                        </ul>
+                    </div>
+                    <div id="mode-desc" class="mode-desc"></div>
+                    <a class="kb-btn kb-btn-lg" onclick="show_records()" data-i18n="record">RECORDS-I18N</a>
+                    <a class="kb-btn kb-btn-lg" onclick="show_setting()" data-i18n="settings">SETTINGS-I18N</a>
+                </div>
+            </div>
+            <div id="setting" style="display: none;">
+                <div class="setting-btns">
+                    <a data-i18n="img-before" type="button" class="kb-btn kb-btn-sm" onclick="getClickBeforeImage()">IMG-BEFORE-I18N</a>
+                    <input type="file" id="click-before-image" accept="image/*" class="visually-hidden" onchange="saveClickBeforeImage()">
+                    <a data-i18n="img-after" type="button" class="kb-btn kb-btn-sm" onclick="getClickAfterImage()">IMG-AFTER-I18N</a>
+                    <input type="file" id="click-after-image" accept="image/*" class="visually-hidden" onchange="saveClickAfterImage()">
+                    <a id="sound" type="button" class="kb-btn kb-btn-sm" role="button" tabindex="0" aria-pressed="true" onclick="changeSoundMode()"></a>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label" data-i18n="title">TITLE-I18N</span>
+                    <input data-placeholder-i18n="eat-kano" type="text" id="title" class="kb-input" placeholder="EAT-KANO-I18N">
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label" data-i18n="key">KEY-I18N</span>
+                    <input data-placeholder-i18n="default-dfjk" type="text" id="keyboard" class="kb-input" maxlength=4 placeholder="DFJK-I18N">
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label" data-i18n="time">TIME-I18N</span>
+                    <input data-placeholder-i18n="default-20s" type="text" id="gameTime" class="kb-input" maxlength=4 placeholder="default-20s">
+                </div>
+                <button type="button" class="kb-btn kb-btn-primary kb-btn-lg" onclick="show_btn();save_cookie();" data-i18n="ok">OK-I18N</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mode-dropdown toggle. CONTRACT.md §2 requires #mode to toggle #mode-menu by
+     adding/removing .show, but lists no global for OPENING the menu (only
+     changeMode(m) for selecting an item). This is the markup's own small
+     helper so the toggle cannot depend on game.js exporting an extra global;
+     game.js still owns mode state via changeMode(). audio.js and game.js
+     themselves are NOT inlined - they load as plain <script src> below. -->
+<script>
+function kbToggleModeMenu(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    var menu = document.getElementById('mode-menu');
+    var btn = document.getElementById('mode');
+    if (!menu || !btn) return;
+    var open = menu.classList.toggle('show');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+/* Close the menu on outside click or Escape. */
+(function () {
+    function close() {
+        var menu = document.getElementById('mode-menu');
+        var btn = document.getElementById('mode');
+        if (!menu || !menu.classList.contains('show')) return;
+        menu.classList.remove('show');
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+    document.addEventListener('click', function (ev) {
+        var picker = document.querySelector('.mode-picker');
+        if (picker && !picker.contains(ev.target)) close();
+    });
+    document.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Escape') close();
+    });
+})();
+</script>
+
+<script src="./static/lang.js"></script>
+<script src="./static/audio.js"></script>
+<script src="./static/game.js"></script>
+
+<!-- ===================================================================
+     Baked locale payload. GENERATED - do not hand-edit.
+
+     static/i18n/*.json is the source of truth. This inline copy exists only
+     because opening index.html directly from disk (file://) makes the page
+     origin-less, and Chrome then refuses fetch(), XMLHttpRequest() AND
+     <script src> for every sibling file alike. game.js lifts its locale out
+     of the copy below (see readBakedLocale), so the game is fully translated
+     even when double-clicked from disk.
+
+     Regenerate with:  node tools/bake-i18n.mjs
+
+     Each value is the corresponding locale file as a JSON *string*, so the
+     payload survives even when the page itself is not UTF-8.
+     =================================================================== -->
+<script id="i18n-utf8" type="application/json">{
+  "en": "{\"a11y-board\":\"Game board, 4 lanes\",\"a11y-hint\":\"Press D, F, J, K or tap a lane to hit the highlighted tile.\",\"accuracy\":\"Accuracy\",\"again\":\"Again\",\"best\":\"Best\",\"calculating\":\"Wait...\",\"combo\":\"Combo\",\"default-20s\":\"20 seconds by default\",\"default-dfjk\":\"DFJK by default\",\"eat-kano\":\"Kano Beat\",\"endless\":\"Endless\",\"game-intro1\":\"Start from the bottom lane\",\"game-intro2\":\"How many can you tap?\",\"game-title\":\"Kano Beat\",\"hits\":\"Hits\",\"home\":\"Home\",\"img-after\":\"Img-after\",\"img-before\":\"Img-before\",\"key\":\"Key\",\"kickoff\":\"Tap the highlighted tile to start\",\"lang\":\"en\",\"max-combo\":\"Max Combo\",\"misses\":\"Misses\",\"mode-desc-endless\":\"One wrong tile ends the run. Scored on CPS.\",\"mode-desc-normal\":\"20 seconds. Score as many as you can.\",\"mode-desc-practice\":\"No game over. Misses just flash.\",\"no-records\":\"—\",\"normal\":\"Normal\",\"ok\":\"OK\",\"paused\":\"Paused\",\"practice\":\"Practice\",\"record\":\"Records\",\"records\":\"Records\",\"records-clear\":\"Clear\",\"records-cleared\":\"Records cleared\",\"records-empty\":\"No records yet. Play a round!\",\"records-title\":\"Local Records\",\"resume\":\"Resume\",\"score\":\"Score\",\"settings\":\"Settings\",\"sound-off\":\"Sound: off\",\"sound-on\":\"Sound: on\",\"start\":\"Start\",\"text-level-1\":\"Try again?\",\"text-level-2\":\"Not bad\",\"text-level-3\":\"Nice\",\"text-level-4\":\"Awesome\",\"text-level-5\":\"R U kidding?\",\"time\":\"Time\",\"time-over\":\"You've cheated for \",\"time-up\":\"Time up\",\"title\":\"Title\"}",
+  "ja": "{\"a11y-board\":\"ゲーム盤、4レーン\",\"a11y-hint\":\"D・F・J・Kキー、またはレーンをタップして光っているマスを叩いてください。\",\"accuracy\":\"精度\",\"again\":\"もう一度\",\"best\":\"ベスト\",\"calculating\":\"計測中...\",\"combo\":\"コンボ\",\"default-20s\":\"初期設定は20秒\",\"default-dfjk\":\"初期設定はDFJK\",\"eat-kano\":\"カノビート\",\"endless\":\"エンドレス\",\"game-intro1\":\"いちばん下のレーンから\",\"game-intro2\":\"何回タップできる?\",\"game-title\":\"カノビート\",\"hits\":\"成功\",\"home\":\"ホーム\",\"img-after\":\"タップ後の画像\",\"img-before\":\"タップ前の画像\",\"key\":\"キー\",\"kickoff\":\"光っているマスをタップで開始\",\"lang\":\"ja\",\"max-combo\":\"最大コンボ\",\"misses\":\"ミス\",\"mode-desc-endless\":\"間違えるとその場で終了。CPSで競います。\",\"mode-desc-normal\":\"20秒。とれるだけスコアを稼ごう。\",\"mode-desc-practice\":\"ゲームオーバーなし。ミスは光るだけ。\",\"no-records\":\"—\",\"normal\":\"ノーマル\",\"ok\":\"OK\",\"paused\":\"一時停止中\",\"practice\":\"プラクティス\",\"record\":\"記録\",\"records\":\"記録\",\"records-clear\":\"消去\",\"records-cleared\":\"記録を消去しました\",\"records-empty\":\"まだ記録がありません。1回プレイしてみよう!\",\"records-title\":\"ローカル記録\",\"resume\":\"再開\",\"score\":\"スコア\",\"settings\":\"設定\",\"sound-off\":\"サウンド: オフ\",\"sound-on\":\"サウンド: オン\",\"start\":\"スタート\",\"text-level-1\":\"もう一回?\",\"text-level-2\":\"悪くない\",\"text-level-3\":\"いいね\",\"text-level-4\":\"すごい\",\"text-level-5\":\"マジで?\",\"time\":\"制限時間\",\"time-over\":\"カウントダウン偏差 \",\"time-up\":\"タイムアップ\",\"title\":\"タイトル\"}",
+  "zh": "{\"a11y-board\":\"游戏面板，共4条轨道\",\"a11y-hint\":\"按 D、F、J、K 键或点击轨道，敲中高亮的方块。\",\"accuracy\":\"准确率\",\"again\":\"再来一次\",\"best\":\"最佳\",\"calculating\":\"计算中\",\"combo\":\"连击\",\"default-20s\":\"默认为20秒\",\"default-dfjk\":\"默认为DFJK\",\"eat-kano\":\"卡诺节拍\",\"endless\":\"无尽模式\",\"game-intro1\":\"从最下面的轨道开始\",\"game-intro2\":\"你能点多少下?\",\"game-title\":\"卡诺节拍\",\"hits\":\"命中\",\"home\":\"主页\",\"img-after\":\"点击后图\",\"img-before\":\"点击前图\",\"key\":\"按键\",\"kickoff\":\"点击高亮方块开始游戏\",\"lang\":\"zh\",\"max-combo\":\"最高连击\",\"misses\":\"失误\",\"mode-desc-endless\":\"一次失误就结束。按 CPS 计分。\",\"mode-desc-normal\":\"20秒内尽可能多得分。\",\"mode-desc-practice\":\"不会结束，失误只会闪一下。\",\"no-records\":\"—\",\"normal\":\"普通模式\",\"ok\":\"确定\",\"paused\":\"已暂停\",\"practice\":\"练习模式\",\"record\":\"本地记录\",\"records\":\"本地记录\",\"records-clear\":\"清空\",\"records-cleared\":\"记录已清空\",\"records-empty\":\"还没有记录，先来一局吧!\",\"records-title\":\"本地记录\",\"resume\":\"继续\",\"score\":\"得分\",\"settings\":\"游戏设置\",\"sound-off\":\"音效: 关闭\",\"sound-on\":\"音效: 开启\",\"start\":\"开始游戏\",\"text-level-1\":\"再练练?\",\"text-level-2\":\"还行\",\"text-level-3\":\"不错\",\"text-level-4\":\"厉害\",\"text-level-5\":\"认真的?\",\"time\":\"时间\",\"time-over\":\"倒计时多了 \",\"time-up\":\"时间到\",\"title\":\"标题\"}"
+}</script>
+</body>
+
+</html>
