@@ -878,6 +878,19 @@ body:has(#welcome[style*="block"]) #GameTimeLayer {
 }
 
 @media (orientation: landscape) and (max-height: 450px) {
+    /* Short landscape screens (phones held sideways).
+       #gameBody is normally sized from its WIDTH, so on an 844x390 phone one
+       tile is 844/4 = 211px and three rows (the tap zone) are 633px tall --
+       taller than the screen. The board then shows barely two rows and the
+       bottom rows spill outside the viewport.
+       Capping the board's width by its height keeps the 4:3 board-to-row ratio
+       that the tap zone assumes, so all three tap rows stay on screen. */
+    #gameBody {
+        width: min(100%, calc(100dvh * 4 / 3));
+        max-width: none;
+        margin: 0 auto;
+    }
+
     #landscape {
         display: block;
         position: fixed;

@@ -609,7 +609,23 @@
         body.style.height = w.innerHeight + 'px';
         boardBG.style.height = w.innerHeight + 'px';
         touchArea[0] = w.innerHeight;
-        touchArea[1] = w.innerHeight - blockSize * 3;
+        // The tap zone is the bottom three rows.
+        //
+        // It must not be allowed to extend above the top of the screen: on a
+        // phone in landscape `blockSize` is driven by the (long) width, so
+        // `innerHeight - 3 * blockSize` goes NEGATIVE -- -105px on an iPhone SE
+        // held sideways. The y-guard at the top of tapCore then reads
+        // `y > -105`, which is true for every possible touch, so the guard stops
+        // protecting anything and a stray tap anywhere ends the run.
+        // Clamping to 0 keeps the zone inside the viewport, matching the
+        // original's intent (the bottom three rows are the target area).
+        touchArea[1] = Math.max(0, w.innerHeight - blockSize * 3);
+        // A degenerate zone (blockSize so large that three rows exceed the whole
+        // screen) would make every tap a hit. Keep the minimum usable zone at the
+        // bottom 40% of the viewport so the game stays playable either way.
+        if (touchArea[1] >= touchArea[0]) {
+            touchArea[1] = Math.round(w.innerHeight * 0.6);
+        }
     }
 
     var blockSize = 0;
@@ -851,20 +867,43 @@
             }
         }
         if (loop) {
-            box.style.webkitTransitionDuration = '0ms';
-            box.style.display = 'none';
+            // Wrap a layer back to the top of the board.
+            //
+            // The original hid the layer with `display:none`, waited 200ms,
+            // repositioned, waited another 100ms and only then showed it again.
+            // That is a ~300ms hole in which a whole board layer is gone, and on
+            // a mid-range phone it is plainly visible: the tiles and the grid
+            // disappear for several frames and snap back, roughly every 10 taps.
+            //
+            // The wait was never needed. A layer only wraps when it has scrolled
+            // a full board-height past the other one, so at that instant it is
+            // entirely off-screen anyway -- repositioning it invisibly is free.
+            // Suppress the transition for the jump, move it, then let the next
+            // frame re-enable the transition. The layer is never hidden, so
+            // there is nothing to flash.
+            box.style[transitionDuration] = '0ms';
             box.y = -blockSize * (Math.floor(box.children.length / 4) + (offset || 0)) * loop;
-            setTimeout(function () {
-                box.style[transform] = 'translate3D(0,' + box.y + 'px,0)';
-                setTimeout(function () {
-                    box.style.display = 'block';
-                }, 100);
-            }, 200);
+            box.style[transform] = 'translate3D(0,' + box.y + 'px,0)';
+
+            // Re-enable the scroll transition on the next frame. rAF keeps this
+            // in step with paint; the original used timers and a display toggle.
+            var boxRef = box;
+            if (typeof w.requestAnimationFrame === 'function') {
+                w.requestAnimationFrame(function () {
+                    boxRef.style[transitionDuration] = '150ms';
+                });
+            } else {
+                setTimeout(function () { boxRef.style[transitionDuration] = '150ms'; }, 16);
+            }
         } else {
             box.y = 0;
             box.style[transform] = 'translate3D(0,' + box.y + 'px,0)';
+            // Only the non-loop path restores the transition here. The loop path
+            // above re-enables it on the next frame instead, AFTER the jump has
+            // been committed -- setting it synchronously here would make the
+            // browser animate the wrap-around jump instead of snapping it.
+            box.style[transitionDuration] = '150ms';
         }
-        box.style[transitionDuration] = '150ms';
     }
 
     function gameLayerMoveNextRow() {
