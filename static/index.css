@@ -256,6 +256,16 @@ a {
     background-position: center;
     /* Tile art is drawn by the .t1..t5 / .tt1..tt5 classes below. */
     background-size: var(--kb-tile) auto;
+    /* Every tile shares one image, and on a slow connection the browser would
+       otherwise paint the squares bare and fill the art in a moment later --
+       a visible flash across the whole board. Promoting the tiles to their own
+       compositor layers lets them be painted once with the art already decoded,
+       and it also makes the per-row scroll transform cheaper on a phone.
+       `backface-visibility` is included because iOS Safari otherwise promotes
+       unpredictably and can drop the layers mid-scroll. */
+    will-change: transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
 }
 
 .bl {

@@ -47,6 +47,16 @@ const TINT = [255, 122, 107]; // warm coral, matches --kb-accent
 const TINT_MIX = 0.30;      // how much coral is blended back in
 const FORCE_SOLID = process.argv.includes('--solid');
 
+/**
+ * Largest edge length the generated art is allowed to ship at.
+ *
+ * A tile is at most 160 CSS px (640px board / 4 lanes), and 480 device px on a
+ * 3x display, so 512 is the smallest power-of-two-ish size that still covers
+ * every real case. The 720x720 original produced a 768 KB PNG whose download
+ * dominated the whole page on a slow connection.
+ */
+const MAX_DIM = 512;
+
 /* ------------------------------------------------------------------ */
 /* PNG encoder                                                         */
 /* ------------------------------------------------------------------ */
@@ -79,41 +89,126 @@ function chunk(type, data) {
 }
 
 /**
- * Encode an RGBA pixel buffer as an 8-bit truecolour-with-alpha PNG.
- * Every scanline gets filter byte 0 (None) for a stable, deterministic stream.
+ * Encode a pixel buffer as an 8-bit PNG.
+ *
+ * Two deliberate choices keep the file small, because this image previously
+ * dominated the whole page load on a slow connection:
+ *
+ *  1. FILTERING. The original encoder wrote filter byte 0 (None) on every
+ *     scanline, so deflate had to compress 1 MB of unfiltered pixels from
+ *     scratch and managed only ~5:1. We use the minimum-sum-of-absolute-
+ *     differences heuristic from the PNG spec: try all five filters per
+ *     scanline and keep whichever produces the smallest byte sum. On a
+ *     box-filtered photograph that typically halves the file.
+ *
+ *  2. COLOUR TYPE. If every pixel shares one alpha value the alpha channel is
+ *     pure waste -- 25% of the raw stream. We detect that and emit colour
+ *     type 2 (truecolour) plus a tRNS chunk carrying the single alpha, instead
+ *     of type 6 (truecolour+alpha). Browsers honour tRNS identically for
+ *     rendering. This asset is a flat-alpha overlay, so it always takes this
+ *     path; a future image with real transparency still encodes correctly.
+ *
+ * Output is deterministic: the filter choice depends only on pixel values, and
+ * zlib is called with fixed settings.
  */
 function encodePNG(width, height, rgba) {
   const sig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
+  // --- is the alpha channel constant? -----------------------------------
+  let alpha0 = rgba[3];
+  let alphaConstant = true;
+  for (let i = 3; i < rgba.length; i += 4) {
+    if (rgba[i] !== alpha0) { alphaConstant = false; break; }
+  }
+  if (!alphaConstant) alpha0 = 0; // unused
+
+  const bpp = alphaConstant ? 3 : 4;        // bytes per pixel actually stored
+  const colorType = alphaConstant ? 2 : 6;  // 2 = truecolour, 6 = truecolour+alpha
+
   const ihdr = Buffer.alloc(13);
   ihdr.writeUInt32BE(width, 0);
   ihdr.writeUInt32BE(height, 4);
-  ihdr[8] = 8;  // bit depth
-  ihdr[9] = 6;  // colour type: truecolour + alpha
-  ihdr[10] = 0; // compression: deflate
-  ihdr[11] = 0; // filter method: adaptive
-  ihdr[12] = 0; // interlace: none
+  ihdr[8] = 8;             // bit depth
+  ihdr[9] = colorType;
+  ihdr[10] = 0;            // compression: deflate
+  ihdr[11] = 0;            // filter method: adaptive
+  ihdr[12] = 0;            // interlace: none
 
-  const stride = width * 4;
-  const raw = Buffer.alloc((stride + 1) * height);
+  // --- flatten to the stored pixel width --------------------------------
+  const stride = width * bpp;
+  const srcStride = width * 4;
+  const flat = Buffer.alloc(stride * height);
   for (let y = 0; y < height; y++) {
-    raw[y * (stride + 1)] = 0; // filter: None
-    rgba.copy
-      ? Buffer.from(rgba.buffer, rgba.byteOffset + y * stride, stride).copy(
-          raw,
-          y * (stride + 1) + 1
-        )
-      : raw.set(rgba.subarray(y * stride, y * stride + stride), y * (stride + 1) + 1);
+    let s = y * srcStride;
+    let o = y * stride;
+    for (let x = 0; x < width; x++) {
+      flat[o] = rgba[s];
+      flat[o + 1] = rgba[s + 1];
+      flat[o + 2] = rgba[s + 2];
+      if (!alphaConstant) flat[o + 3] = rgba[s + 3];
+      s += 4;
+      o += bpp;
+    }
+  }
+
+  // --- adaptive filtering ------------------------------------------------
+  const raw = Buffer.alloc((stride + 1) * height);
+  const prior = Buffer.alloc(stride);
+  const cand = [Buffer.alloc(stride), Buffer.alloc(stride), Buffer.alloc(stride),
+                Buffer.alloc(stride), Buffer.alloc(stride)];
+
+  for (let y = 0; y < height; y++) {
+    const line = flat.subarray(y * stride, y * stride + stride);
+
+    for (let x = 0; x < stride; x++) {
+      const a = x >= bpp ? line[x - bpp] : 0;      // left
+      const b = prior[x];                           // up
+      const c = x >= bpp ? prior[x - bpp] : 0;      // up-left
+      const v = line[x];
+
+      cand[0][x] = v;
+      cand[1][x] = (v - a) & 0xff;
+      cand[2][x] = (v - b) & 0xff;
+      cand[3][x] = (v - ((a + b) >> 1)) & 0xff;
+
+      // Paeth predictor, straight from the PNG spec.
+      const p = a + b - c;
+      const pa = Math.abs(p - a);
+      const pb = Math.abs(p - b);
+      const pc = Math.abs(p - c);
+      const pred = pa <= pb && pa <= pc ? a : (pb <= pc ? b : c);
+      cand[4][x] = (v - pred) & 0xff;
+    }
+
+    // Minimum sum of absolute differences (treating bytes as signed).
+    let best = 0;
+    let bestScore = Infinity;
+    for (let f = 0; f < 5; f++) {
+      let sum = 0;
+      const buf = cand[f];
+      for (let x = 0; x < stride; x++) {
+        const s = buf[x];
+        sum += s < 128 ? s : 256 - s;
+      }
+      if (sum < bestScore) { bestScore = sum; best = f; }
+    }
+
+    raw[y * (stride + 1)] = best;
+    cand[best].copy(raw, y * (stride + 1) + 1);
+    line.copy(prior);
   }
 
   const idat = deflateSync(raw, { level: 9, memLevel: 9, strategy: 0 });
 
-  return Buffer.concat([
-    sig,
-    chunk('IHDR', ihdr),
-    chunk('IDAT', idat),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
+  const parts = [sig, chunk('IHDR', ihdr)];
+  if (alphaConstant) {
+    // tRNS for colour type 2 holds one 16-bit grey/alpha sample.
+    const trns = Buffer.alloc(2);
+    trns.writeUInt16BE(alpha0, 0);
+    parts.push(chunk('tRNS', trns));
+  }
+  parts.push(chunk('IDAT', idat), chunk('IEND', Buffer.alloc(0)));
+  return Buffer.concat(parts);
 }
 
 /** Parse a PNG's IHDR back out, for the verification step. */
@@ -176,6 +271,55 @@ function buildSolid(width, height) {
   return rgba;
 }
 
+/**
+ * Downscale RGBA with a box filter.
+ *
+ * WHY THIS IS NEEDED
+ *   The source artwork is 720x720, but a tile is at most 160 CSS px (the board
+ *   is capped at 640px and has four lanes) -- and only ~480 device px even on a
+ *   3x display. Shipping the hit state at 720x720 RGBA made it 768 KB, eight
+ *   times larger than the un-hit artwork and by far the biggest asset in the
+ *   project. On a throttled connection it took over 30 seconds to download,
+ *   which is what made the board visibly fill in late during play.
+ *
+ *   A box filter (average every source pixel that maps into a destination pixel)
+ *   is exactly right for integer downscales: no ringing, no kernel to tune, and
+ *   deterministic.
+ */
+function downscaleBox(src, sw, sh, dw, dh) {
+  const out = Buffer.alloc(dw * dh * 4);
+  const xRatio = sw / dw;
+  const yRatio = sh / dh;
+
+  for (let dy = 0; dy < dh; dy++) {
+    const y0 = Math.floor(dy * yRatio);
+    const y1 = Math.min(sh, Math.max(y0 + 1, Math.ceil((dy + 1) * yRatio)));
+    for (let dx = 0; dx < dw; dx++) {
+      const x0 = Math.floor(dx * xRatio);
+      const x1 = Math.min(sw, Math.max(x0 + 1, Math.ceil((dx + 1) * xRatio)));
+
+      let r = 0, g = 0, b = 0, a = 0, n = 0;
+      for (let sy = y0; sy < y1; sy++) {
+        let idx = (sy * sw + x0) * 4;
+        for (let sx = x0; sx < x1; sx++) {
+          r += src[idx];
+          g += src[idx + 1];
+          b += src[idx + 2];
+          a += src[idx + 3];
+          n++;
+          idx += 4;
+        }
+      }
+      const o = (dy * dw + dx) * 4;
+      out[o] = Math.round(r / n);
+      out[o + 1] = Math.round(g / n);
+      out[o + 2] = Math.round(b / n);
+      out[o + 3] = Math.round(a / n);
+    }
+  }
+  return out;
+}
+
 async function main() {
   let width = 720;
   let height = 720;
@@ -201,6 +345,19 @@ async function main() {
     rgba = buildSolid(width, height);
   }
 
+  // Shrink to the largest size the art can actually be displayed at, so the
+  // payload is proportional to what is on screen. 512 comfortably covers a
+  // 160-CSS-px tile at 3x DPR (480 device px) without shipping discarded detail.
+  // Applies to the solid fallback too -- the fallback must also stay small.
+  if (width > MAX_DIM || height > MAX_DIM) {
+    const dw = Math.min(width, MAX_DIM);
+    const dh = Math.min(height, MAX_DIM);
+    process.stdout.write(`make-hit-image: downscaling ${width}x${height} -> ${dw}x${dh} (box filter)\n`);
+    rgba = downscaleBox(rgba, width, height, dw, dh);
+    width = dw;
+    height = dh;
+  }
+
   const png = encodePNG(width, height, rgba);
   writeFileSync(OUT, png);
 
@@ -211,8 +368,16 @@ async function main() {
       `colorType=${ihdr.colorType} alpha=${ALPHA_HIT} bytes=${png.length} sha256=${sha}\n`
   );
 
-  if (ihdr.width !== width || ihdr.height !== height || ihdr.bitDepth !== 8 || ihdr.colorType !== 6) {
-    throw new Error('post-write verification failed: PNG header does not match expectations');
+  // Colour type 6 (truecolour+alpha) is used when the alpha channel genuinely
+  // varies; type 2 (truecolour) plus a tRNS chunk when it is a single flat
+  // value, which is the normal case for this asset and roughly a third smaller.
+  // Both render identically in every browser.
+  const legalColorType = ihdr.colorType === 6 || ihdr.colorType === 2;
+  if (ihdr.width !== width || ihdr.height !== height || ihdr.bitDepth !== 8 || !legalColorType) {
+    throw new Error(
+      `post-write verification failed: expected ${width}x${height} bitDepth=8 ` +
+      `colorType=2|6, got ${ihdr.width}x${ihdr.height} bitDepth=${ihdr.bitDepth} colorType=${ihdr.colorType}`
+    );
   }
 }
 

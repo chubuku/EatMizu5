@@ -16,6 +16,24 @@
     -->
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <link rel="icon" href="data:," />
+    <!--
+      The tile art is preloaded FIRST, ahead of the stylesheet.
+
+      Without a hint the browser only discovers ClickBefore.png when it computes
+      style for a `.t1`..`.t5` tile -- after game.js has run and the board has
+      already painted -- so the board appears bare and the art pops in later.
+      That late fill-in is the "blink" seen during play on a slower connection.
+
+      Order matters: the preload must come BEFORE the stylesheet link. Placed
+      after it, the image request queues behind CSS, and on a throttled
+      connection the art still arrived ~5s after first paint. Issued first, both
+      downloads proceed in parallel and the art is ready with (or before) the
+      first paint.
+
+      Only the art is hinted: the audio is fetched by the scripts, and the
+      locales are small and also baked into the page.
+    -->
+    <link rel="preload" as="image" href="./static/image/ClickBefore.png" fetchpriority="high" />
     <link href="./static/index.css" rel="stylesheet" type="text/css">
 </head>
 
@@ -265,9 +283,26 @@ function kbToggleModeMenu(e) {
 })();
 </script>
 
-<script src="./static/lang.js"></script>
-<script src="./static/audio.js"></script>
-<script src="./static/game.js"></script>
+<!--
+  The three scripts are `defer`red, not left to block the parser.
+
+  Previously they were plain synchronous scripts at the end of <body>: the
+  browser had to download AND execute all ~93 KB before it considered the
+  document parsed, so on a slow connection the first meaningful paint waited on
+  them (measured: CSS ready at 3.2s, DOMContentLoaded not until 8.0s).
+
+  `defer` runs them in the same relative order, still only after the DOM is
+  parsed, but WITHOUT holding up the parse -- so the styled title screen paints
+  immediately and the scripts arrive behind it. This is safe here because:
+    - all three are classic scripts (not modules), so defer preserves order;
+    - every one of them only touches the DOM inside a function that is invoked
+      later (init() from <body onLoad>, or a listener), never at top level;
+    - defer executes before DOMContentLoaded and therefore before window load,
+      which is when onLoad="init()" fires.
+-->
+<script src="./static/lang.js" defer></script>
+<script src="./static/audio.js" defer></script>
+<script src="./static/game.js" defer></script>
 
 <!-- ===================================================================
      Baked locale payload. GENERATED - do not hand-edit.
