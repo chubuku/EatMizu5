@@ -56,6 +56,18 @@ body {
     -webkit-user-select: none;
     user-select: none;
     box-sizing: border-box;
+
+    /* Stop the browser turning gameplay input into a zoom.
+       `user-scalable=no` in the viewport meta is IGNORED by iOS Safari from
+       iOS 10 onward (deliberately, for accessibility), so the meta tag alone
+       does NOT prevent double-tap-to-zoom: two taps landing close together --
+       exactly what a fast rhythm player does -- zoom the page mid-round and the
+       board jumps under their finger.
+       `touch-action: manipulation` is the reliable cross-browser suppression:
+       it keeps normal panning and scrolling but removes the double-tap zoom.
+       Applied to * so every element the player can touch is covered, rather
+       than only #GameLayerBG where it previously lived alone. */
+    touch-action: manipulation;
 }
 
 a,

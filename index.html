@@ -6,7 +6,15 @@
     <title data-i18n="eat-kano">Kano Beat</title>
     <meta name="description" content="Kano Beat - a four-lane rhythm tap game. Local bests and records, no network required." />
     <meta name="theme-color" content="#1a0d10" />
-    <meta name="viewport" content="initial-scale=1, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, width=device-width, target-densitydpi=device-dpi" />
+    <!--
+      viewport-fit=cover lets the board use the full screen on notched phones.
+      `user-scalable=no` / `maximum-scale=1` are kept for older Android, but note
+      that iOS Safari ignores them from iOS 10 onward (deliberately, for
+      accessibility) -- the actual double-tap-zoom suppression is
+      `touch-action: manipulation` on `*` in static/index.css. Do not remove that
+      rule thinking this meta tag covers it; it does not on iOS.
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <link rel="icon" href="data:," />
     <link href="./static/index.css" rel="stylesheet" type="text/css">
 </head>

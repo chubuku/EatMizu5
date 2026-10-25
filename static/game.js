@@ -1494,6 +1494,7 @@
         }
 
         d.addEventListener('keydown', onKeyDown, false);
+        installZoomGuards();
 
         initSetting();
         gameRestart();
@@ -1501,6 +1502,66 @@
 
         // i18n resolves asynchronously (fetch/XHR); when it lands we re-render.
         loadI18N();
+    }
+
+    /**
+     * Suppress page zoom during play.
+     *
+     * `touch-action: manipulation` on `*` (static/index.css) removes
+     * double-tap-to-zoom, and `user-scalable=no` in the viewport meta covers
+     * older Android -- but neither stops everything:
+     *
+     *   - iOS Safari ignores `user-scalable=no` from iOS 10 on, by design.
+     *   - A two-finger pinch still zooms, because `touch-action: manipulation`
+     *     deliberately leaves pinch-zoom enabled (only `none` disables it, and
+     *     that would also kill normal scrolling everywhere).
+     *   - Safari fires non-standard `gesturestart`/`gesturechange` events for
+     *     pinch, which CSS cannot touch at all.
+     *
+     * All three make the board jump under the player's fingers mid-round, so we
+     * swallow them here. Nothing is lost: the game never scrolls or pans, and
+     * the settings inputs remain fully usable with the keyboard and caret.
+     */
+    function installZoomGuards() {
+        var swallow = function (e) {
+            try { e.preventDefault(); } catch (err) { /* ignore */ }
+            return false;
+        };
+
+        // Safari-only pinch events. No CSS equivalent exists.
+        d.addEventListener('gesturestart', swallow, { passive: false });
+        d.addEventListener('gesturechange', swallow, { passive: false });
+        d.addEventListener('gestureend', swallow, { passive: false });
+
+        // Multi-touch anywhere zooms; a single finger is normal gameplay.
+        d.addEventListener('touchstart', function (e) {
+            if (e.touches && e.touches.length > 1) swallow(e);
+        }, { passive: false });
+
+        // Double-tap. Browsers that ignore touch-action zoom ~300ms after the
+        // second tap. We only block taps that land OUTSIDE the board: taps on
+        // the board are gameplay and are handled by gameTapEvent, and blocking
+        // them here would double-preventDefault the same gesture.
+        var lastTapAt = 0;
+        d.addEventListener('touchend', function (e) {
+            var target = e.target;
+            if (boardBG && (target === boardBG || boardBG.contains(target))) return;
+            var now = Date.now();
+            if (now - lastTapAt < 300) swallow(e);
+            lastTapAt = now;
+        }, { passive: false });
+
+        // Some Android browsers also zoom on double-click of the page chrome.
+        d.addEventListener('dblclick', function (e) {
+            var target = e.target;
+            if (boardBG && (target === boardBG || boardBG.contains(target))) return;
+            swallow(e);
+        }, { passive: false });
+
+        // Safari on macOS/iOS: block the ctrl+wheel / pinch-trackpad zoom.
+        d.addEventListener('wheel', function (e) {
+            if (e.ctrlKey) swallow(e);
+        }, { passive: false });
     }
 
     function initSetting() {
